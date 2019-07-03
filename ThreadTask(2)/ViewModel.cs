@@ -18,6 +18,16 @@ namespace ThreadTask_2_
 
         public ViewModel()
         {
+            if (File.Exists("Settings.json"))
+            {
+                AppSetting = JsonConvert.DeserializeObject<AppSetting>(File.ReadAllText("Settings.json"));
+            }
+            else
+            {
+                AppSetting = new AppSetting();
+            }
+
+
             AllProcesses = new ObservableCollection<Process>(Process.GetProcesses());
             UpdateProcesses = new Task(delegate
             {
@@ -30,18 +40,36 @@ namespace ThreadTask_2_
                 }
             });
             UpdateProcesses.Start();
+            KillIgnoredApps = new Task(delegate
+            {
+                while (true)
+                {
+                    if (AppSetting.IsModerate)
+                        try
+                        {
+                            foreach (var item in AppSetting.IgnoredApps)
+                            {
+                                foreach (var process in AllProcesses)
+                                {
+                                    if (process.ProcessName == item)
+                                    {
+                                        process.Kill();
+                                    }
+                                }
+                            }
+                        }
+                        catch (Exception)
+                        {
+                            continue;
+                        }
+                }
+            });
+            KillIgnoredApps.Start();
 
             ReportCommand = new ReportCommand(this);
             AddNewIgnoredApp = new AddNewIgnoredApp(this);
 
-            if (File.Exists("Settings.json"))
-            {
-                AppSetting = JsonConvert.DeserializeObject<AppSetting>(File.ReadAllText("Settings.json"));
-            }
-            else
-            {
-                AppSetting = new AppSetting();
-            }
+
         }
         public ReportCommand ReportCommand { get; set; }
         public AddNewIgnoredApp AddNewIgnoredApp { get; set; }
@@ -56,6 +84,7 @@ namespace ThreadTask_2_
             set { allProcesses = value; OnNotifyPropertyChanged(nameof(AllProcesses)); }
         }
         public Task UpdateProcesses { get; set; }
+        public Task KillIgnoredApps { get; set; }
 
         public event PropertyChangedEventHandler PropertyChanged;
         public void OnNotifyPropertyChanged(string param)

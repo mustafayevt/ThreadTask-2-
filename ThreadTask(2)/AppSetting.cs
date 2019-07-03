@@ -10,6 +10,6 @@ namespace ThreadTask_2_
     public class AppSetting
     {
         public ObservableCollection<string> IgnoredApps { get; set; } = new ObservableCollection<string>();
-        public bool CanModerate { get; set; }
+        public bool IsModerate { get; set; }
     }
 }
